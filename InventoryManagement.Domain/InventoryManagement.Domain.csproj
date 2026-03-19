@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="InventoryManagement.Domain.UnitTests" />
+  </ItemGroup>
+
 </Project>
