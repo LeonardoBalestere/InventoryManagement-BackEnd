@@ -1,6 +1,3 @@
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using InventoryManagement.Application.Common.Interfaces;
 using InventoryManagement.Application.Common.Models;
 using InventoryManagement.Application.Products.Queries.GetProducts;

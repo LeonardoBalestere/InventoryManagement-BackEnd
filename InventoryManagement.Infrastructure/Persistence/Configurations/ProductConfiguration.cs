@@ -33,7 +33,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
                .WithOne() // ProductId is a FK below
                .HasForeignKey(x => x.ProductId)
                .OnDelete(DeleteBehavior.Cascade);
-               
+
         // If we want the property backed by private field cleanly
         builder.Metadata.FindNavigation(nameof(Product.Movements))!
                .SetPropertyAccessMode(PropertyAccessMode.Field);

@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using InventoryManagement.Application.Common.Interfaces;
 using InventoryManagement.Application.Common.Models;
 using MediatR;

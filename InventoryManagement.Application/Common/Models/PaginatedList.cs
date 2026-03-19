@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace InventoryManagement.Application.Common.Models;
 
 public class PaginatedList<T>

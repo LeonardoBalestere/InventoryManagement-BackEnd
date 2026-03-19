@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using InventoryManagement.Domain.Enums;
 using InventoryManagement.Domain.Exceptions;
 
@@ -45,7 +42,7 @@ public sealed class Product
         Description = description?.Trim() ?? string.Empty;
         BasePrice = basePrice;
         MinStockLevel = minStockLevel;
-        IsActive = true; 
+        IsActive = true;
     }
 
     public int GetCurrentStock()
@@ -54,7 +51,7 @@ public sealed class Product
         {
             MovementType.Inbound => m.Quantity,
             MovementType.Outbound => -m.Quantity,
-            MovementType.Adjustment => m.Quantity, 
+            MovementType.Adjustment => m.Quantity,
             _ => 0
         });
     }

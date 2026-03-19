@@ -1,12 +1,6 @@
 using InventoryManagement.Domain.Entities;
 using InventoryManagement.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace InventoryManagement.API.Infrastructure;
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace InventoryManagement.Application.Common.Exceptions;
 
 public class NotFoundException : Exception

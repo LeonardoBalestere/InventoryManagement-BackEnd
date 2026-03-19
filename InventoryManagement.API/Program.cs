@@ -1,26 +1,19 @@
-using InventoryManagement.Application;
-using InventoryManagement.Infrastructure;
 using InventoryManagement.API.Infrastructure;
+using InventoryManagement.Application;
+using InventoryManagement.Application.Products.Commands.AddInventoryMovement;
+using InventoryManagement.Application.Products.Commands.CreateProduct;
+using InventoryManagement.Application.Products.Queries.GetProducts;
+using InventoryManagement.Infrastructure;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-using System;
-using System.Text;
-using MediatR;
-using InventoryManagement.Application.Products.Commands.CreateProduct;
-using InventoryManagement.Application.Products.Commands.AddInventoryMovement;
-using InventoryManagement.Application.Products.Queries.GetProducts;
 using Scalar.AspNetCore;
-using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi;
-using Microsoft.Extensions.Logging;
-using OpenTelemetry.Logs;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -186,7 +179,7 @@ app.MapPost("/api/auth/login", (LoginRequest request, Microsoft.Extensions.Confi
     var managerUser = config["Auth:ManagerUser"] ?? "manager";
     var managerPass = config["Auth:ManagerPass"] ?? "password";
 
-    if ((request.Username == adminUser && request.Password == adminPass) || 
+    if ((request.Username == adminUser && request.Password == adminPass) ||
         (request.Username == managerUser && request.Password == managerPass))
     {
         var role = request.Username == adminUser ? "Admin" : "Manager";

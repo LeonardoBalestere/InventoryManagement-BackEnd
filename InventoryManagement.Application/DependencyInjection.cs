@@ -1,7 +1,7 @@
 using FluentValidation;
+using InventoryManagement.Application.Common.Behaviors;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using InventoryManagement.Application.Common.Behaviors;
 
 namespace InventoryManagement.Application;
 
@@ -11,7 +11,8 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         });

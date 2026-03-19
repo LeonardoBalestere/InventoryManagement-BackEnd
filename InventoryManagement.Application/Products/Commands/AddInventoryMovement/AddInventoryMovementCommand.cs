@@ -1,5 +1,3 @@
-using System;
-
 namespace InventoryManagement.Application.Products.Commands.AddInventoryMovement;
 
 public record AddInventoryMovementCommand(

@@ -1,5 +1,3 @@
-using System;
-
 namespace InventoryManagement.Application.Products.Queries.GetProducts;
 
 public record ProductDto(

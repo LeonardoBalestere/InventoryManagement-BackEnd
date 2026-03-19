@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using InventoryManagement.Application.Common.Interfaces;
 
 namespace InventoryManagement.Infrastructure.Persistence.Repositories;

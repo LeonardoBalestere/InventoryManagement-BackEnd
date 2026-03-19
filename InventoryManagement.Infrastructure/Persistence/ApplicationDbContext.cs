@@ -1,8 +1,6 @@
 using InventoryManagement.Application.Common.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using System.Threading;
-using System.Threading.Tasks;
 using InventoryManagement.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace InventoryManagement.Infrastructure.Persistence;
 
