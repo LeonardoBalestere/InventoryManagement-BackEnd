@@ -1,0 +1,9 @@
+services:
+  inventorymanagement.api:
+    image: ${DOCKER_REGISTRY-}inventorymanagementapi
+    build:
+      context: .
+      dockerfile: InventoryManagement.API/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=host.docker.internal;Port=5432;Database=InventoryDb;Username=admin;Password=supersecretpassword;
+

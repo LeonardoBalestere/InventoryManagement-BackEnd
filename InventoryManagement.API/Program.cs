@@ -19,31 +19,65 @@ using InventoryManagement.Application.Products.Queries.GetProducts;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Add layers
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// 2. Add Exception Handling (RFC 7807 problem details)
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-// 3. Add OpenTelemetry
+builder.Services.AddHealthChecks();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
+            factory: partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 100,
+                QueueLimit = 0,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
+builder.Logging.ClearProviders();
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeScopes = true;
+    logging.AddOtlpExporter();
+});
+
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing =>
     {
         tracing.AddAspNetCoreInstrumentation()
-               .AddHttpClientInstrumentation();
+               .AddHttpClientInstrumentation()
+               .AddOtlpExporter();
     })
     .WithMetrics(metrics =>
     {
         metrics.AddAspNetCoreInstrumentation()
-               .AddRuntimeInstrumentation();
+               .AddRuntimeInstrumentation()
+               .AddOtlpExporter();
     });
 
-// 4. Add Authentication & Authorization
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -96,8 +130,7 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-app.UseExceptionHandler(); // Maps to the registered IExceptionHandler
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
@@ -112,10 +145,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAll");
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 // ----- API ENDPOINTS -----
+app.MapHealthChecks("/health");
+
 var api = app.MapGroup("/api/products").RequireAuthorization();
 
 // GET Products (Pagination)
@@ -143,10 +181,15 @@ api.MapPost("/{id}/movements", async (Guid id, [FromBody] AddInventoryMovementRe
 // POST Login (Generates JWT Token for authentication)
 app.MapPost("/api/auth/login", (LoginRequest request, Microsoft.Extensions.Configuration.IConfiguration config) =>
 {
-    // Demonstration credentials. In a real app, validate against a database/identity provider!
-    if ((request.Username == "admin" || request.Username == "manager") && request.Password == "password")
+    var adminUser = config["Auth:AdminUser"] ?? "admin";
+    var adminPass = config["Auth:AdminPass"] ?? "password";
+    var managerUser = config["Auth:ManagerUser"] ?? "manager";
+    var managerPass = config["Auth:ManagerPass"] ?? "password";
+
+    if ((request.Username == adminUser && request.Password == adminPass) || 
+        (request.Username == managerUser && request.Password == managerPass))
     {
-        var role = request.Username == "admin" ? "Admin" : "Manager";
+        var role = request.Username == adminUser ? "Admin" : "Manager";
 
         var claims = new[]
         {
@@ -171,8 +214,8 @@ app.MapPost("/api/auth/login", (LoginRequest request, Microsoft.Extensions.Confi
     return Results.Unauthorized();
 }).AllowAnonymous();
 
+await app.ApplyMigrationsAndSeedAsync();
 app.Run();
 
-// DTO representing the inbound movement request, keeping ProductId out of the body
 public record AddInventoryMovementRequest(string MovementType, int Quantity, string? Justification, string IdempotencyKey);
 public record LoginRequest(string Username, string Password);
