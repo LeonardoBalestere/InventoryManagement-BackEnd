@@ -1,6 +1,7 @@
 using InventoryManagement.Application.Common.Interfaces;
 using InventoryManagement.Domain.Entities;
 using MediatR;
+using Ganss.Xss;
 
 namespace InventoryManagement.Application.Products.Commands.CreateProduct;
 
@@ -23,10 +24,15 @@ internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProduc
             throw new InventoryManagement.Application.Common.Exceptions.ConflictException("A product with this SKU already exists.");
         }
 
+        var sanitizer = new HtmlSanitizer();
+        var sanitizedName = sanitizer.Sanitize(request.Name);
+        var sanitizedDescription = string.IsNullOrWhiteSpace(request.Description) ? request.Description : sanitizer.Sanitize(request.Description);
+
         var product = new Product(
+            request.CategoryId,
             request.Sku,
-            request.Name,
-            request.Description,
+            sanitizedName,
+            sanitizedDescription,
             request.BasePrice,
             request.MinStockLevel);
 

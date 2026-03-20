@@ -6,4 +6,5 @@
   <Project Path="InventoryManagement.Application/InventoryManagement.Application.csproj" />
   <Project Path="InventoryManagement.Domain/InventoryManagement.Domain.csproj" />
   <Project Path="InventoryManagement.Infrastructure/InventoryManagement.Infrastructure.csproj" />
+  <Project Path="InventoryManagement.IntegrationTests/InventoryManagement.IntegrationTests.csproj" />
 </Solution>

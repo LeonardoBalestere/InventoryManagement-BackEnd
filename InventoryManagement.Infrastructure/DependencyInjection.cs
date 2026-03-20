@@ -19,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IProductReadRepository, ProductReadRepository>();
 
+        services.AddDistributedMemoryCache();
+
         return services;
     }
 }

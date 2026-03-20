@@ -6,6 +6,7 @@ namespace InventoryManagement.Domain.Entities;
 public sealed class Product
 {
     public Guid Id { get; private set; }
+    public Guid CategoryId { get; private set; }
     public string Sku { get; private set; }
     public string Name { get; private set; }
     public string Description { get; private set; }
@@ -19,8 +20,11 @@ public sealed class Product
     // Parameterless constructor for ORM
     private Product() { }
 
-    public Product(string sku, string name, string description, decimal basePrice, int minStockLevel)
+    public Product(Guid categoryId, string sku, string name, string description, decimal basePrice, int minStockLevel)
     {
+        if (categoryId == Guid.Empty)
+            throw new DomainException("CategoryId is required.");
+
         if (string.IsNullOrWhiteSpace(sku) || sku.Length > 20)
             throw new DomainException("SKU is required and cannot exceed 20 characters.");
 
@@ -37,6 +41,7 @@ public sealed class Product
             throw new DomainException("Minimum stock level cannot be negative.");
 
         Id = Guid.NewGuid();
+        CategoryId = categoryId;
         Sku = sku.Trim();
         Name = name.Trim();
         Description = description?.Trim() ?? string.Empty;

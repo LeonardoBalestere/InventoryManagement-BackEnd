@@ -28,8 +28,13 @@ public static class DatabaseMigrationExtensions
 
                 try
                 {
-                    var product1 = new Product("SKU-100", "Wireless Mouse", "A fast wireless mouse", 49.99m, 10);
-                    var product2 = new Product("SKU-101", "Mechanical Keyboard", "Clicky keyboard", 89.99m, 5);
+                    var electronicsCategory = new Category("Electronics", "Electronic devices and accessories");
+                    var peripheralsCategory = new Category("Peripherals", "Computer peripherals");
+
+                    context.Set<Category>().AddRange(electronicsCategory, peripheralsCategory);
+
+                    var product1 = new Product(peripheralsCategory.Id, "SKU-100", "Wireless Mouse", "A fast wireless mouse", 49.99m, 10);
+                    var product2 = new Product(peripheralsCategory.Id, "SKU-101", "Mechanical Keyboard", "Clicky keyboard", 89.99m, 5);
 
                     product1.AddMovement(50, InventoryManagement.Domain.Enums.MovementType.Inbound, "Initial stock");
                     product2.AddMovement(20, InventoryManagement.Domain.Enums.MovementType.Inbound, "Initial stock");

@@ -80,9 +80,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "InventoryAPI",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "InventoryClients",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "supersecretkey_inventoryapi12345!"))
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is missing from configuration.")))
         };
     });
 
@@ -174,10 +174,10 @@ api.MapPost("/{id}/movements", async (Guid id, [FromBody] AddInventoryMovementRe
 // POST Login (Generates JWT Token for authentication)
 app.MapPost("/api/auth/login", (LoginRequest request, Microsoft.Extensions.Configuration.IConfiguration config) =>
 {
-    var adminUser = config["Auth:AdminUser"] ?? "admin";
-    var adminPass = config["Auth:AdminPass"] ?? "password";
-    var managerUser = config["Auth:ManagerUser"] ?? "manager";
-    var managerPass = config["Auth:ManagerPass"] ?? "password";
+    var adminUser = config["Auth:AdminUser"] ?? throw new InvalidOperationException("Auth:AdminUser missing");
+    var adminPass = config["Auth:AdminPass"] ?? throw new InvalidOperationException("Auth:AdminPass missing");
+    var managerUser = config["Auth:ManagerUser"] ?? throw new InvalidOperationException("Auth:ManagerUser missing");
+    var managerPass = config["Auth:ManagerPass"] ?? throw new InvalidOperationException("Auth:ManagerPass missing");
 
     if ((request.Username == adminUser && request.Password == adminPass) ||
         (request.Username == managerUser && request.Password == managerPass))
@@ -190,12 +190,13 @@ app.MapPost("/api/auth/login", (LoginRequest request, Microsoft.Extensions.Confi
             new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"] ?? "supersecretkey_inventoryapi12345!"));
+        var jwtKey = config["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is missing from configuration.");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
-            issuer: config["Jwt:Issuer"] ?? "InventoryAPI",
-            audience: config["Jwt:Audience"] ?? "InventoryClients",
+            issuer: config["Jwt:Issuer"],
+            audience: config["Jwt:Audience"],
             claims: claims,
             expires: DateTime.UtcNow.AddHours(2),
             signingCredentials: creds

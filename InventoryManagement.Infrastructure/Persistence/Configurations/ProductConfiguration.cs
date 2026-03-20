@@ -10,6 +10,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
     {
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.CategoryId)
+               .IsRequired();
+
         builder.HasIndex(x => x.Sku)
                .IsUnique();
 
