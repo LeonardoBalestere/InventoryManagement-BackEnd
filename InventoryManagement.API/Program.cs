@@ -17,7 +17,23 @@ using System.Text;
 using Asp.Versioning;
 using Asp.Versioning.Builder;
 
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.Console()
+        .WriteTo.Seq(context.Configuration["SeqUrl"] ?? "http://localhost:5341")
+        .WriteTo.Elasticsearch(new Serilog.Sinks.Elasticsearch.ElasticsearchSinkOptions(new Uri(context.Configuration["ElasticSearchUrl"] ?? "http://localhost:9200"))
+        {
+            AutoRegisterTemplate = true,
+            IndexFormat = "inventorymanagement-logs-{0:yyyy.MM.dd}"
+        });
+});
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -131,6 +147,13 @@ builder.Services.AddOpenApi(options =>
             [new OpenApiSecuritySchemeReference("Bearer")] = new List<string>()
         });
 
+        // Define the explicit order of tags in the UI
+        document.Tags = new HashSet<OpenApiTag>
+        {
+            new() { Name = "Authentication", Description = "Endpoints for logging in and getting tokens" },
+            new() { Name = "Products", Description = "Endpoints for managing products and stock movements" }
+        };
+
         return Task.CompletedTask;
     });
 });
@@ -168,29 +191,8 @@ var apiVersionSet = app.NewApiVersionSet()
 
 var api = app.MapGroup("/api/v{version:apiVersion}/products")
     .WithApiVersionSet(apiVersionSet)
+    .WithTags("Products")
     .RequireAuthorization();
-
-// GET Products (Pagination)
-api.MapGet("/", async ([FromQuery] string? searchTerm, [FromQuery] int? pageNumber, [FromQuery] int? pageSize, IMediator mediator) =>
-{
-    var query = new GetProductsQuery(searchTerm, pageNumber ?? 1, pageSize ?? 10);
-    return Results.Ok(await mediator.Send(query));
-});
-
-// POST Product (Admin only)
-api.MapPost("/", async ([FromBody] CreateProductCommand command, IMediator mediator) =>
-{
-    var productId = await mediator.Send(command);
-    return Results.Created($"/api/products/{productId}", new { Id = productId });
-}).RequireAuthorization("AdminOnly");
-
-// POST Movement (Manager or Admin)
-api.MapPost("/{id}/movements", async (Guid id, [FromBody] AddInventoryMovementRequest request, IMediator mediator) =>
-{
-    var command = new AddInventoryMovementCommand(id, request.MovementType, request.Quantity, request.Justification, request.IdempotencyKey);
-    var result = await mediator.Send(command);
-    return Results.Ok(new { ProductId = result });
-}).RequireAuthorization("ManagerOrAdmin");
 
 // POST Login (Generates JWT Token for authentication)
 app.MapPost("/api/auth/login", (LoginRequest request, Microsoft.Extensions.Configuration.IConfiguration config) =>
@@ -227,10 +229,36 @@ app.MapPost("/api/auth/login", (LoginRequest request, Microsoft.Extensions.Confi
     }
 
     return Results.Unauthorized();
-}).AllowAnonymous();
+}).AllowAnonymous()
+  .WithTags("Authentication");
 
-await app.ApplyMigrationsAndSeedAsync();
+// GET Products (Pagination)
+api.MapGet("/", async ([FromQuery] string? searchTerm, [FromQuery] int? pageNumber, [FromQuery] int? pageSize, IMediator mediator) =>
+{
+    var query = new GetProductsQuery(searchTerm, pageNumber ?? 1, pageSize ?? 10);
+    return Results.Ok(await mediator.Send(query));
+});
+
+// POST Product (Admin only)
+api.MapPost("/", async ([FromBody] CreateProductCommand command, IMediator mediator) =>
+{
+    var productId = await mediator.Send(command);
+    return Results.Created($"/api/products/{productId}", new { Id = productId });
+}).RequireAuthorization("AdminOnly");
+
+// POST Movement (Manager or Admin)
+api.MapPost("/{id}/movements", async (Guid id, [FromBody] AddInventoryMovementRequest request, IMediator mediator) =>
+{
+    var command = new AddInventoryMovementCommand(id, request.MovementType, request.Quantity, request.Justification, request.IdempotencyKey);
+    var result = await mediator.Send(command);
+    return Results.Ok(new { ProductId = result });
+}).RequireAuthorization("ManagerOrAdmin");
+
+if (app.Environment.EnvironmentName != "Testing")
+{
+    await app.ApplyMigrationsAndSeedAsync();
+}
 app.Run();
 
-public record AddInventoryMovementRequest(string MovementType, int Quantity, string? Justification, string IdempotencyKey);
 public record LoginRequest(string Username, string Password);
+public record AddInventoryMovementRequest(string MovementType, int Quantity, string? Justification, string IdempotencyKey);

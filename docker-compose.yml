@@ -5,13 +5,55 @@ services:
       context: .
       dockerfile: InventoryManagement.API/Dockerfile
     environment:
-      - ConnectionStrings__DefaultConnection=Host=host.docker.internal;Port=5432;Database=InventoryDb;Username=admin;Password=supersecretpassword;
+   
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=InventoryDb;Username=admin;Password=supersecretpassword;
       - ConnectionStrings__RedisConnection=redis:6379
+      - SeqUrl=http://seq:80
+      - ElasticSearchUrl=http://elasticsearch:9200
     depends_on:
       - redis
+      - db
+      - seq
+      - elasticsearch
+
+  seq:
+    image: datalust/seq:latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=Admin1234!
+    ports:
+      - "5341:80"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.4
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
 
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
 
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=InventoryDb
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=supersecretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

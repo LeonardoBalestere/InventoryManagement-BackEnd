@@ -1,7 +1,6 @@
 using InventoryManagement.Domain.Entities;
 using InventoryManagement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 
 namespace InventoryManagement.API.Infrastructure;
 
@@ -17,31 +16,20 @@ public static class DatabaseMigrationExtensions
         {
             var context = services.GetRequiredService<ApplicationDbContext>();
 
-            logger.LogInformation("Applying database migrations...");
-            await context.Database.MigrateAsync();
-            logger.LogInformation("Database migrations applied successfully.");
+            logger.LogInformation("Deleting existing database for testing...");
+            await context.Database.EnsureDeletedAsync();
+            logger.LogInformation("Creating new database for testing...");
+            await context.Database.EnsureCreatedAsync();
 
-            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-            var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-
-            if (!await roleManager.RoleExistsAsync("Admin"))
-                await roleManager.CreateAsync(new IdentityRole("Admin"));
-            if (!await roleManager.RoleExistsAsync("Manager"))
-                await roleManager.CreateAsync(new IdentityRole("Manager"));
-
-            if (await userManager.FindByEmailAsync("admin@admin.com") == null)
-            {
-                var adminUser = new IdentityUser { UserName = "admin", Email = "admin@admin.com" };
-                await userManager.CreateAsync(adminUser, "Admin123!");
-                await userManager.AddToRoleAsync(adminUser, "Admin");
-            }
-
-            if (await userManager.FindByEmailAsync("manager@manager.com") == null)
-            {
-                var managerUser = new IdentityUser { UserName = "manager", Email = "manager@manager.com" };
-                await userManager.CreateAsync(managerUser, "Manager123!");
-                await userManager.AddToRoleAsync(managerUser, "Manager");
-            }
+            // When the app be finished the line above will be uncommented and the line below will be commented and the deletedatabase line will be removed, but for testing purposes, we need to ensure the database is created and the migrations are applied.
+            // The command " dotnet ef migrations add InitialCreate " will need to run before
+            //var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+            //if (pendingMigrations.Any())
+            //{
+            //    logger.LogInformation("Applying pending database migrations...");
+            //    await context.Database.MigrateAsync();
+            //    logger.LogInformation("Database migrations applied successfully.");
+            //}
 
             if (!await context.Products.AnyAsync())
             {
