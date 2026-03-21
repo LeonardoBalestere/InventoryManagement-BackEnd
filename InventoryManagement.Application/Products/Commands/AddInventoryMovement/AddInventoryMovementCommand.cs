@@ -1,3 +1,5 @@
+using InventoryManagement.Application.Common.Interfaces;
+
 namespace InventoryManagement.Application.Products.Commands.AddInventoryMovement;
 
 public record AddInventoryMovementCommand(
@@ -5,5 +7,5 @@ public record AddInventoryMovementCommand(
     string MovementType,
     int Quantity,
     string? Justification,
-    string IdempotencyKey // Rule 7: Idempotency Key
-) : MediatR.IRequest<Guid>;
+    string IdempotencyKey 
+) : MediatR.IRequest<Guid>, IIdempotentRequest;

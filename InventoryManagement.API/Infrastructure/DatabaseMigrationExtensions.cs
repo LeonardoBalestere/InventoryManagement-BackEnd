@@ -1,6 +1,7 @@
 using InventoryManagement.Domain.Entities;
 using InventoryManagement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace InventoryManagement.API.Infrastructure;
 
@@ -19,6 +20,28 @@ public static class DatabaseMigrationExtensions
             logger.LogInformation("Applying database migrations...");
             await context.Database.MigrateAsync();
             logger.LogInformation("Database migrations applied successfully.");
+
+            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+
+            if (!await roleManager.RoleExistsAsync("Admin"))
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
+            if (!await roleManager.RoleExistsAsync("Manager"))
+                await roleManager.CreateAsync(new IdentityRole("Manager"));
+
+            if (await userManager.FindByEmailAsync("admin@admin.com") == null)
+            {
+                var adminUser = new IdentityUser { UserName = "admin", Email = "admin@admin.com" };
+                await userManager.CreateAsync(adminUser, "Admin123!");
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+
+            if (await userManager.FindByEmailAsync("manager@manager.com") == null)
+            {
+                var managerUser = new IdentityUser { UserName = "manager", Email = "manager@manager.com" };
+                await userManager.CreateAsync(managerUser, "Manager123!");
+                await userManager.AddToRoleAsync(managerUser, "Manager");
+            }
 
             if (!await context.Products.AnyAsync())
             {

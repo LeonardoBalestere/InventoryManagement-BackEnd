@@ -6,4 +6,12 @@ services:
       dockerfile: InventoryManagement.API/Dockerfile
     environment:
       - ConnectionStrings__DefaultConnection=Host=host.docker.internal;Port=5432;Database=InventoryDb;Username=admin;Password=supersecretpassword;
+      - ConnectionStrings__RedisConnection=redis:6379
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
 
