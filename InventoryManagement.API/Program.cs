@@ -3,6 +3,8 @@ using InventoryManagement.Application;
 using InventoryManagement.Application.Products.Commands.AddInventoryMovement;
 using InventoryManagement.Application.Products.Commands.CreateProduct;
 using InventoryManagement.Application.Products.Queries.GetProducts;
+using InventoryManagement.Application.Categories.Commands.CreateCategory;
+using InventoryManagement.Application.Categories.Queries.GetCategories;
 using InventoryManagement.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -151,6 +153,7 @@ builder.Services.AddOpenApi(options =>
         document.Tags = new HashSet<OpenApiTag>
         {
             new() { Name = "Authentication", Description = "Endpoints for logging in and getting tokens" },
+            new() { Name = "Categories", Description = "Endpoints for managing categories" },
             new() { Name = "Products", Description = "Endpoints for managing products and stock movements" }
         };
 
@@ -192,6 +195,11 @@ var apiVersionSet = app.NewApiVersionSet()
 var api = app.MapGroup("/api/v{version:apiVersion}/products")
     .WithApiVersionSet(apiVersionSet)
     .WithTags("Products")
+    .RequireAuthorization();
+
+var apiCategories = app.MapGroup("/api/v{version:apiVersion}/categories")
+    .WithApiVersionSet(apiVersionSet)
+    .WithTags("Categories")
     .RequireAuthorization();
 
 // POST Login (Generates JWT Token for authentication)
@@ -253,6 +261,20 @@ api.MapPost("/{id}/movements", async (Guid id, [FromBody] AddInventoryMovementRe
     var result = await mediator.Send(command);
     return Results.Ok(new { ProductId = result });
 }).RequireAuthorization("ManagerOrAdmin");
+
+// GET Categories (Pagination)
+apiCategories.MapGet("/", async ([FromQuery] string? searchTerm, [FromQuery] int? pageNumber, [FromQuery] int? pageSize, IMediator mediator) =>
+{
+    var query = new GetCategoriesQuery(searchTerm, pageNumber ?? 1, pageSize ?? 10);
+    return Results.Ok(await mediator.Send(query));
+});
+
+// POST Category (Admin only)
+apiCategories.MapPost("/", async ([FromBody] CreateCategoryCommand command, IMediator mediator) =>
+{
+    var categoryId = await mediator.Send(command);
+    return Results.Created($"/api/categories/{categoryId}", new { Id = categoryId });
+}).RequireAuthorization("AdminOnly");
 
 if (app.Environment.EnvironmentName != "Testing")
 {

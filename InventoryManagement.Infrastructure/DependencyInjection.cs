@@ -24,6 +24,9 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IProductReadRepository, ProductReadRepository>();
 
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ICategoryReadRepository, CategoryReadRepository>();
+
         var redisConnectionString = configuration.GetConnectionString("RedisConnection");
         if (!string.IsNullOrEmpty(redisConnectionString))
         {
