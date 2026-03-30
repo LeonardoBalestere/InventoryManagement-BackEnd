@@ -12,5 +12,6 @@
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
     <None Include="InventoryManagement.IntegrationTests\ProductEndpointTests.cs" />
+    <None Include="InventoryManagement.UnitTests\Domain\Entities\ProductTests.cs" />
   </ItemGroup>
 </Project>

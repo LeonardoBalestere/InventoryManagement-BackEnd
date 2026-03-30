@@ -1,3 +1,4 @@
+using FluentAssertions;
 using InventoryManagement.Application.Common.Interfaces;
 using InventoryManagement.Application.Products.Commands.CreateProduct;
 using Microsoft.AspNetCore.Hosting;
@@ -16,6 +17,7 @@ using Xunit;
 
 namespace InventoryManagement.IntegrationTests;
 
+[Trait("Category", "Integration")]
 public class ProductEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
@@ -82,29 +84,32 @@ public class ProductEndpointTests : IClassFixture<WebApplicationFactory<Program>
         var response = await _client.GetAsync("/api/v1/products");
 
         // Assert
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact]
-    public async Task GetProducts_WithValidToken_ReturnsSuccess()
+    [Theory]
+    [InlineData("admin", "Admin123!", HttpStatusCode.OK)]
+    [InlineData("manager", "Manager123!", HttpStatusCode.OK)]
+    public async Task GetProducts_WithValidToken_ReturnsSuccess(string username, string password, HttpStatusCode expectedStatus)
     {
         // Arrange
-        var token = await GetAuthTokenAsync("admin", "Admin123!");
+        var token = await GetAuthTokenAsync(username, password);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
         var response = await _client.GetAsync("/api/v1/products");
 
         // Assert
-        response.EnsureSuccessStatusCode();
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        response.StatusCode.Should().Be(expectedStatus);
     }
 
-    [Fact]
-    public async Task CreateProduct_WithAdminRole_ReturnsCreated()
+    [Theory]
+    [InlineData("admin", "Admin123!", HttpStatusCode.Created)]
+    [InlineData("manager", "Manager123!", HttpStatusCode.Forbidden)]
+    public async Task CreateProduct_ReturnsExpectedStatusCode_BasedOnRole(string username, string password, HttpStatusCode expectedStatus)
     {
         // Arrange
-        var token = await GetAuthTokenAsync("admin", "Admin123!");
+        var token = await GetAuthTokenAsync(username, password);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var command = new CreateProductCommand(Guid.NewGuid(), $"SKU-{Guid.NewGuid().ToString().Substring(0, 8)}", "Test Product", "Test Desc", 10.5m, 5);
@@ -113,22 +118,6 @@ public class ProductEndpointTests : IClassFixture<WebApplicationFactory<Program>
         var response = await _client.PostAsJsonAsync("/api/v1/products", command);
 
         // Assert
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task CreateProduct_WithManagerRole_ReturnsForbidden()
-    {
-        // Arrange
-        var token = await GetAuthTokenAsync("manager", "Manager123!");
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        var command = new CreateProductCommand(Guid.NewGuid(), $"SKU-{Guid.NewGuid().ToString().Substring(0, 8)}", "Test Product", "Test Desc", 10.5m, 5);
-
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/v1/products", command);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        response.StatusCode.Should().Be(expectedStatus);
     }
 }
