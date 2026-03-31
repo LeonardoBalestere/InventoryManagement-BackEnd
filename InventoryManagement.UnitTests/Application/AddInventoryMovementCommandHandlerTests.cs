@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using InventoryManagement.Application.Common.Exceptions;
 using InventoryManagement.Application.Common.Interfaces;
 using InventoryManagement.Application.Products.Commands.AddInventoryMovement;
@@ -10,6 +11,7 @@ using Xunit;
 
 namespace InventoryManagement.UnitTests.Application;
 
+[Trait("Category", "Unit")]
 public class AddInventoryMovementCommandHandlerTests
 {
     private readonly Mock<IProductRepository> _productRepositoryMock;
@@ -31,17 +33,21 @@ public class AddInventoryMovementCommandHandlerTests
         _productRepositoryMock.Setup(repo => repo.GetByIdAsync(command.ProductId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Product?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotFoundException>(() => 
-            _handler.Handle(command, CancellationToken.None));
+        // Act
+        Func<Task> act = async () => await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 
-    [Fact]
-    public async Task Handle_ValidCommand_AddsMovementAndSaves()
+    [Theory]
+    [InlineData("Inbound", 10, 10, "Inbound test")]
+    [InlineData("Adjustment", 5, 5, "Stock re-eval")]
+    public async Task Handle_ValidCommand_AddsMovementAndSaves(string movementType, int quantity, int expectedStock, string justification)
     {
         // Arrange
-        var product = new Product("SKU123", "Test Product", "Description", 10.0m, 5);
-        var command = new AddInventoryMovementCommand(product.Id, "Inbound", 10, null, "1234");
+        var product = new Product(Guid.NewGuid(), "SKU123", "Test Product", "Description", 10.0m, 5);
+        var command = new AddInventoryMovementCommand(product.Id, movementType, quantity, justification, Guid.NewGuid().ToString());
 
         _productRepositoryMock.Setup(repo => repo.GetByIdAsync(command.ProductId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(product);
@@ -50,9 +56,9 @@ public class AddInventoryMovementCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(product.Id, result);
-        Assert.Equal(10, product.GetCurrentStock());
-        
+        result.Should().Be(product.Id);
+        product.GetCurrentStock().Should().Be(expectedStock);
+
         _productRepositoryMock.Verify(repo => repo.UpdateAsync(product, It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }

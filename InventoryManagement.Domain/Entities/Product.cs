@@ -1,5 +1,6 @@
 using InventoryManagement.Domain.Enums;
 using InventoryManagement.Domain.Exceptions;
+using InventoryManagement.Domain.Errors;
 
 namespace InventoryManagement.Domain.Entities;
 
@@ -23,22 +24,22 @@ public sealed class Product
     public Product(Guid categoryId, string sku, string name, string description, decimal basePrice, int minStockLevel)
     {
         if (categoryId == Guid.Empty)
-            throw new DomainException("CategoryId is required.");
+            throw new DomainException(DomainErrors.Product.CategoryIdRequired);
 
         if (string.IsNullOrWhiteSpace(sku) || sku.Length > 20)
-            throw new DomainException("SKU is required and cannot exceed 20 characters.");
+            throw new DomainException(DomainErrors.Product.SkuRequired);
 
         if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
-            throw new DomainException("Name is required and cannot exceed 100 characters.");
+            throw new DomainException(DomainErrors.Product.NameRequired);
 
         if (!string.IsNullOrWhiteSpace(description) && description.Length > 500)
-            throw new DomainException("Description cannot exceed 500 characters.");
+            throw new DomainException(DomainErrors.Product.DescriptionMax);
 
         if (basePrice < 0)
-            throw new DomainException("Base price cannot be negative.");
+            throw new DomainException(DomainErrors.Product.BasePriceNegative);
 
         if (minStockLevel < 0)
-            throw new DomainException("Minimum stock level cannot be negative.");
+            throw new DomainException(DomainErrors.Product.MinStockLevelNegative);
 
         Id = Guid.NewGuid();
         CategoryId = categoryId;
@@ -64,12 +65,12 @@ public sealed class Product
     public void AddMovement(int quantity, MovementType type, string? justification = null)
     {
         if (!IsActive)
-            throw new DomainException("Cannot process inventory movements for an inactive product.");
+            throw new DomainException(DomainErrors.Product.CannotModifyInactive);
 
         if (type == MovementType.Outbound)
         {
             if (GetCurrentStock() - quantity < 0)
-                throw new DomainException("Outbound movement cannot result in a negative stock balance.");
+                throw new DomainException(DomainErrors.Product.NegativeStockBalance);
         }
 
         var movement = new InventoryMovement(Id, type, quantity, justification);
@@ -79,7 +80,7 @@ public sealed class Product
     public void ChangePrice(decimal newBasePrice)
     {
         if (newBasePrice < 0)
-            throw new DomainException("Base price cannot be negative.");
+            throw new DomainException(DomainErrors.Product.BasePriceNegative);
 
         BasePrice = newBasePrice;
     }
@@ -87,13 +88,13 @@ public sealed class Product
     public void UpdateInfo(string name, string description, int minStockLevel)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
-            throw new DomainException("Name is required and cannot exceed 100 characters.");
+            throw new DomainException(DomainErrors.Product.NameRequired);
 
         if (!string.IsNullOrWhiteSpace(description) && description.Length > 500)
-            throw new DomainException("Description cannot exceed 500 characters.");
+            throw new DomainException(DomainErrors.Product.DescriptionMax);
 
         if (minStockLevel < 0)
-            throw new DomainException("Minimum stock level cannot be negative.");
+            throw new DomainException(DomainErrors.Product.MinStockLevelNegative);
 
         Name = name.Trim();
         Description = description?.Trim() ?? string.Empty;
