@@ -4,6 +4,7 @@ using FluentAssertions;
 using InventoryManagement.Domain.Entities;
 using InventoryManagement.Domain.Enums;
 using InventoryManagement.Domain.Exceptions;
+using InventoryManagement.Domain.Errors;
 using Xunit;
 
 namespace InventoryManagement.UnitTests.Domain;
@@ -32,7 +33,7 @@ public class ProductTests
 
         // Assert
         act.Should().Throw<DomainException>()
-            .WithMessage("Outbound movement cannot result in a negative stock balance.");
+            .WithMessage(DomainErrors.Product.NegativeStockBalance);
     }
 
     [Theory]
@@ -40,7 +41,7 @@ public class ProductTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData("   ")]
-    public void AddMovement_AdjustmentWithoutJustification_ThrowsDomainException(string invalidJustification)
+    public void AddMovement_AdjustmentWithoutJustification_ThrowsDomainException(string? invalidJustification)
     {
         // Arrange
         var product = CreateValidProduct();
@@ -50,7 +51,7 @@ public class ProductTests
 
         // Assert
         act.Should().Throw<DomainException>()
-            .WithMessage("An adjustment movement requires a valid justification.");
+            .WithMessage(DomainErrors.InventoryMovement.InvalidAdjustment);
     }
 
     public static IEnumerable<object[]> StockCalculationScenarios()
@@ -83,7 +84,7 @@ public class ProductTests
     [InlineData(MovementType.Outbound, 5, null)]
     [InlineData(MovementType.Adjustment, 2, "Correction")]
     [InlineData(MovementType.Adjustment, -2, "Correction")]
-    public void Deactivate_PreventsNewMovements(MovementType movementType, int quantity, string justification)
+    public void Deactivate_PreventsNewMovements(MovementType movementType, int quantity, string? justification)
     {
         // Arrange
         var product = CreateValidProduct();
@@ -101,14 +102,14 @@ public class ProductTests
 
         // Assert
         act.Should().Throw<DomainException>()
-            .WithMessage("Cannot process inventory movements for an inactive product.");
+            .WithMessage(DomainErrors.Product.CannotModifyInactive);
     }
 
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public void Constructor_WithInvalidName_ThrowsDomainException(string invalidName)
+    public void Constructor_WithInvalidName_ThrowsDomainException(string? invalidName)
     {
         // Arrange
         var categoryId = Guid.NewGuid();

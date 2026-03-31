@@ -1,4 +1,5 @@
 using InventoryManagement.Domain.Exceptions;
+using InventoryManagement.Domain.Errors;
 
 namespace InventoryManagement.Domain.Entities;
 
@@ -14,7 +15,7 @@ public sealed class Category
     public Category(string name, string description)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new DomainException("Category Name is required.");
+            throw new DomainException(DomainErrors.Category.NameRequired);
 
         Id = Guid.NewGuid();
         Name = name.Trim();
@@ -24,7 +25,7 @@ public sealed class Category
     public void Update(string name, string description)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new DomainException("Category Name is required.");
+            throw new DomainException(DomainErrors.Category.NameRequired);
 
         Name = name.Trim();
         Description = description?.Trim() ?? string.Empty;

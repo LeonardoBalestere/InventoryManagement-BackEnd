@@ -2,6 +2,7 @@ using FluentAssertions;
 using InventoryManagement.Domain.Entities;
 using InventoryManagement.Domain.Enums;
 using InventoryManagement.Domain.Exceptions;
+using InventoryManagement.Domain.Errors;
 using System;
 using Xunit;
 
@@ -46,14 +47,14 @@ public class ProductTests
 
         // Assert
         act.Should().Throw<DomainException>()
-           .WithMessage("*negative stock*");
+           .WithMessage(DomainErrors.Product.NegativeStockBalance);
     }
 
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public void AddMovement_WhenAdjustingWithoutJustification_ShouldThrowDomainException(string invalidJustification)
+    public void AddMovement_WhenAdjustingWithoutJustification_ShouldThrowDomainException(string? invalidJustification)
     {
         // Arrange
         var product = new Product(_validCategoryId, _validSku, _validName, _validDesc, _validPrice, _validMinStock);
@@ -63,6 +64,6 @@ public class ProductTests
 
         // Assert
         act.Should().Throw<DomainException>()
-           .WithMessage("*valid justification*"); 
+           .WithMessage(DomainErrors.InventoryMovement.InvalidAdjustment);
     }
 }

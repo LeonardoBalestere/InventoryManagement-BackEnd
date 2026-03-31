@@ -1,5 +1,6 @@
 using InventoryManagement.Domain.Enums;
 using InventoryManagement.Domain.Exceptions;
+using InventoryManagement.Domain.Errors;
 
 namespace InventoryManagement.Domain.Entities;
 
@@ -18,19 +19,19 @@ public sealed class InventoryMovement
     internal InventoryMovement(Guid productId, MovementType type, int quantity, string? justification)
     {
         if (productId == Guid.Empty)
-            throw new DomainException("ProductId cannot be empty.");
+            throw new DomainException(DomainErrors.InventoryMovement.ProductIdEmpty);
 
         if ((type == MovementType.Inbound || type == MovementType.Outbound) && quantity <= 0)
-            throw new DomainException($"{type} quantity must be greater than zero.");
+            throw new DomainException(string.Format(DomainErrors.InventoryMovement.QuantityGreaterThanZeroFormat, type));
 
         if (type == MovementType.Adjustment && quantity == 0)
-            throw new DomainException("Adjustment quantity cannot be zero.");
+            throw new DomainException(DomainErrors.InventoryMovement.InvalidAdjustmentZero);
 
         if (type == MovementType.Adjustment && string.IsNullOrWhiteSpace(justification))
-            throw new DomainException("An adjustment movement requires a valid justification.");
+            throw new DomainException(DomainErrors.InventoryMovement.InvalidAdjustment);
 
         if (!string.IsNullOrWhiteSpace(justification) && justification.Length > 255)
-            throw new DomainException("Justification cannot exceed 255 characters.");
+            throw new DomainException(DomainErrors.InventoryMovement.JustificationMax);
 
         Id = Guid.NewGuid();
         ProductId = productId;
