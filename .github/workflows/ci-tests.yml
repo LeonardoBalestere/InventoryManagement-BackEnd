@@ -27,7 +27,7 @@ jobs:
       run: dotnet build ./InventoryManagement.slnx --no-restore --configuration Release
 
     - name: Run xUnit and Collect Coverage
-      run: dotnet test ./InventoryManagement.slnx --no-build --configuration Release --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+      run: dotnet test ./InventoryManagement.slnx --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4

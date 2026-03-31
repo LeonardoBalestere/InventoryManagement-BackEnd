@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/Governance/">
+    <File Path=".github/copilot-instructions.md" />
+    <File Path=".github/workflows/ci-tests.yml" />
+    <File Path=".gitignore" />
+    <File Path="codecov.yml" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
