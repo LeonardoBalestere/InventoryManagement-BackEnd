@@ -16,20 +16,13 @@ public static class DatabaseMigrationExtensions
         {
             var context = services.GetRequiredService<ApplicationDbContext>();
 
-            logger.LogInformation("Deleting existing database for testing...");
-            await context.Database.EnsureDeletedAsync();
-            logger.LogInformation("Creating new database for testing...");
-            await context.Database.EnsureCreatedAsync();
-
-            // When the app be finished the line above will be uncommented and the line below will be commented and the deletedatabase line will be removed, but for testing purposes, we need to ensure the database is created and the migrations are applied.
-            // The command " dotnet ef migrations add InitialCreate " will need to run before
-            //var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
-            //if (pendingMigrations.Any())
-            //{
-            //    logger.LogInformation("Applying pending database migrations...");
-            //    await context.Database.MigrateAsync();
-            //    logger.LogInformation("Database migrations applied successfully.");
-            //}
+            var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+            if (pendingMigrations.Any())
+            {
+                logger.LogInformation("Applying pending database migrations...");
+                await context.Database.MigrateAsync();
+                logger.LogInformation("Database migrations applied successfully.");
+            }
 
             if (!await context.Products.AnyAsync())
             {

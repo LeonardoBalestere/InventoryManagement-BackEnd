@@ -1,5 +1,6 @@
 using InventoryManagement.Application.Common.Interfaces;
 using InventoryManagement.Domain.Entities;
+using InventoryManagement.Infrastructure.Persistence.Outbox;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,8 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>, IUnitOfWork
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
 
     public DbSet<Category> Categories => Set<Category>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
