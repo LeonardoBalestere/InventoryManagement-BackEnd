@@ -66,4 +66,27 @@ public class ProductTests
         act.Should().Throw<DomainException>()
            .WithMessage(DomainErrors.InventoryMovement.InvalidAdjustment);
     }
+
+    [Fact]
+    public void IsBelowMinStock_WhenStockIsBelowMinLevel_ShouldReturnTrue()
+    {
+        // Arrange: no movements yet, stock 0 < min 5
+        var product = new Product(_validCategoryId, _validSku, _validName, _validDesc, _validPrice, _validMinStock);
+
+        // Act & Assert
+        product.IsBelowMinStock().Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(50)]
+    public void IsBelowMinStock_WhenStockIsAtOrAboveMinLevel_ShouldReturnFalse(int inboundQuantity)
+    {
+        // Arrange
+        var product = new Product(_validCategoryId, _validSku, _validName, _validDesc, _validPrice, _validMinStock);
+        product.AddMovement(inboundQuantity, MovementType.Inbound, "Restock");
+
+        // Act & Assert
+        product.IsBelowMinStock().Should().BeFalse();
+    }
 }

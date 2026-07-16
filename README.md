@@ -14,19 +14,25 @@ This project goes beyond a traditional, tightly-coupled CRUD. The main focus is 
 
 * **Clean Architecture:** Clear separation of concerns into layers (Domain, Application, Infrastructure, API).
 * **SOLID Principles:** Code focused on single responsibility, dependency injection, and inversion of control.
-* **Design Patterns:** Implementation of patterns such as the *Repository Pattern* and *Unit of Work*.
-* **Security:** Authentication/Authorization (JWT) implementation and route protection.
+* **Design Patterns:** *Repository Pattern*, *Unit of Work*, *CQRS* (MediatR), *Outbox Pattern*, and idempotent commands.
+* **Security:** Authentication/Authorization (JWT with role-based policies), rate limiting, and input sanitization (Anti-XSS).
+* **Resilience:** Polly retries and circuit breaker around the distributed cache (Redis).
+* **Observability:** Structured logging (Serilog) and OpenTelemetry traces/metrics.
 * **Global Exception Handling:** Custom middleware for standardized error responses (Problem Details).
 
 ## 🛠️ Technologies Used
 
 * **Language:** C# 12 / C# 13
 * **Framework:** .NET 10.0 (ASP.NET Core Web API)
-* **ORM:** Entity Framework Core
-* **Database:** SQL Server (or SQLite for initial local development)
+* **ORM:** Entity Framework Core (automated migrations)
+* **Database:** PostgreSQL
+* **Cache:** Redis (`IDistributedCache`) with Polly resilience
+* **Messaging:** Transactional Outbox + `BackgroundService` + SendGrid (low-stock email alerts)
 * **API Documentation:** OpenAPI / Scalar
-* **Object Mapping:** AutoMapper
+* **CQRS / Mediator:** MediatR
 * **Validation:** FluentValidation
+* **Logging & Telemetry:** Serilog (Seq / Elasticsearch) and OpenTelemetry
+* **Tests:** xUnit, Moq, FluentAssertions, WebApplicationFactory
 
 ## 📁 Solution Structure
 
@@ -72,14 +78,24 @@ dotnet run --project InventoryManagement.API
 
 The API will be up and running, and you can access the interactive Scalar documentation at `https://localhost:<port>/docs`.
 
-## 📈 Roadmap (Next Steps)
+## 📐 Architectural Decision Records
 
-- [ ] Initial Domain modeling (Product, Category, Movement).
-- [ ] EF Core configuration and Migrations.
-- [ ] OpenTelemetry (OTel) implementation for observability.
-- [ ] Unit testing creation with xUnit and Moq.
-- [ ] Integration testing with Testcontainers.
-- [ ] Application containerization with Docker.
+The key architecture and infrastructure decisions are documented in [docs/adr](docs/adr).
+
+## 📈 Roadmap (Completed Scope)
+
+- [x] Initial Domain modeling (Product, Category, Movement).
+- [x] EF Core configuration and Migrations.
+- [x] OpenTelemetry (OTel) implementation for observability.
+- [x] Unit testing creation with xUnit and Moq.
+- [x] Integration testing (WebApplicationFactory).
+- [x] Application containerization with Docker.
+- [x] JWT authentication with role-based authorization.
+- [x] Idempotent commands backed by Redis (`IDistributedCache`).
+- [x] Polly resilience (retry + circuit breaker) for the distributed cache (ADR-5).
+- [x] Async low-stock email alerts via Outbox Pattern + SendGrid (ADR-9).
+
+Remaining improvements are tracked as [GitHub issues](../../issues) (tech debt and enhancements backlog).
 
 ---
 *Developed by alves*

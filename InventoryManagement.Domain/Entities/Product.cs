@@ -62,6 +62,11 @@ public sealed class Product
         });
     }
 
+    public bool IsBelowMinStock()
+    {
+        return GetCurrentStock() < MinStockLevel;
+    }
+
     public void AddMovement(int quantity, MovementType type, string? justification = null)
     {
         if (!IsActive)
