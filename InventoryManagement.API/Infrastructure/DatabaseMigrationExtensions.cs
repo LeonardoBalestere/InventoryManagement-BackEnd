@@ -1,9 +1,12 @@
 using InventoryManagement.Domain.Entities;
 using InventoryManagement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
 
 namespace InventoryManagement.API.Infrastructure;
 
+// Startup glue that requires a live database; skipped in the Testing environment
+[ExcludeFromCodeCoverage]
 public static class DatabaseMigrationExtensions
 {
     public static async Task ApplyMigrationsAndSeedAsync(this WebApplication app)

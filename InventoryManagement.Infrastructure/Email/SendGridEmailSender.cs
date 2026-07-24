@@ -1,9 +1,12 @@
 using InventoryManagement.Application.Common.Interfaces;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+using System.Diagnostics.CodeAnalysis;
 
 namespace InventoryManagement.Infrastructure.Email;
 
+// Thin adapter over the SendGrid SDK; exercising it requires a live API key
+[ExcludeFromCodeCoverage]
 internal sealed class SendGridEmailSender : IEmailSender
 {
     private readonly EmailOptions _options;

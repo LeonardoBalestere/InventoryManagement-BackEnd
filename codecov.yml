@@ -2,13 +2,16 @@ coverage:
   status:
     project:
       default:
-        target: 80% 
-        threshold: 1% 
+        target: 80%
+        threshold: 1%
     patch:
       default:
-        target: auto 
+        target: auto
+
+ignore:
+  - "**/Persistence/Migrations/**"
 
 comment:
   layout: "reach, diff, flags, files"
   behavior: default
-  require_changes: false 
+  require_changes: false
