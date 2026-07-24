@@ -18,7 +18,10 @@ public sealed class AddInventoryMovementCommandValidator : AbstractValidator<Add
             .NotEqual(0).WithMessage("Quantity cannot be zero for any movement.");
 
         RuleFor(x => x.IdempotencyKey)
-            .NotEmpty().WithMessage("An Idempotency Key is required to prevent duplicate processing.");
+            .NotEmpty().WithMessage("An Idempotency Key is required to prevent duplicate processing.")
+            .Must(key => Guid.TryParse(key, out _))
+            .WithMessage("The Idempotency Key must be a valid GUID.")
+            .When(x => !string.IsNullOrWhiteSpace(x.IdempotencyKey), ApplyConditionTo.CurrentValidator);
 
         When(x => x.MovementType == "Adjustment", () =>
         {

@@ -9,6 +9,7 @@ using InventoryManagement.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OpenTelemetry.Logs;
@@ -57,11 +58,13 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("Frontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
@@ -80,6 +83,21 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1)
             }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Strict per-IP limit for the login endpoint to slow down credential stuffing
+    var authPermitLimit = int.TryParse(builder.Configuration["RateLimiting:Auth:PermitLimit"], out var permits) && permits > 0 ? permits : 5;
+    var authWindowSeconds = int.TryParse(builder.Configuration["RateLimiting:Auth:WindowSeconds"], out var seconds) && seconds > 0 ? seconds : 60;
+
+    options.AddPolicy("AuthRateLimiter", httpContext =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = authPermitLimit,
+                QueueLimit = 0,
+                Window = TimeSpan.FromSeconds(authWindowSeconds)
+            }));
 });
 
 builder.Logging.ClearProviders();
@@ -178,7 +196,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("Frontend");
 app.UseRateLimiter();
 
 app.UseAuthentication();
@@ -238,6 +256,7 @@ app.MapPost("/api/auth/login", (LoginRequest request, Microsoft.Extensions.Confi
 
     return Results.Unauthorized();
 }).AllowAnonymous()
+  .RequireRateLimiting("AuthRateLimiter")
   .WithTags("Authentication");
 
 // GET Products (Pagination)

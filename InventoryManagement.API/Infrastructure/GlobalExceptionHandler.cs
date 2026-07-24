@@ -3,6 +3,7 @@ using InventoryManagement.Application.Common.Exceptions;
 using InventoryManagement.Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace InventoryManagement.API.Infrastructure;
 
@@ -52,11 +53,13 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         }
         else
         {
+            // Never expose exception internals to clients; the full exception is already logged above
             problemDetails.Title = "Internal Server Error";
             problemDetails.Status = StatusCodes.Status500InternalServerError;
             problemDetails.Detail = "An unexpected error occurred.";
-            problemDetails.Extensions["exception"] = exception.ToString();
         }
+
+        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
 
         httpContext.Response.StatusCode = problemDetails.Status.Value;
         httpContext.Response.ContentType = "application/problem+json";
