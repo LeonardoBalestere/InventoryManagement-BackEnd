@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.CodeAnalysis;
 
 namespace InventoryManagement.Infrastructure.BackgroundServices;
 
@@ -9,6 +10,8 @@ namespace InventoryManagement.Infrastructure.BackgroundServices;
 /// Polls the transactional outbox and dispatches pending messages without blocking
 /// the main HTTP request thread (ADR-9).
 /// </summary>
+// Timing-driven hosting loop; the dispatch logic itself is covered via OutboxDispatcher tests
+[ExcludeFromCodeCoverage]
 public sealed class OutboxProcessor : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
