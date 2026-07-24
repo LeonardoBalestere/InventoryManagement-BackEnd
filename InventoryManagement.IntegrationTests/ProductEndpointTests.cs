@@ -45,7 +45,9 @@ public class ProductEndpointTests : IClassFixture<WebApplicationFactory<Program>
                     new KeyValuePair<string, string?>("Auth:AdminUser", "admin"),
                     new KeyValuePair<string, string?>("Auth:AdminPass", "Admin123!"),
                     new KeyValuePair<string, string?>("Auth:ManagerUser", "manager"),
-                    new KeyValuePair<string, string?>("Auth:ManagerPass", "Manager123!")
+                    new KeyValuePair<string, string?>("Auth:ManagerPass", "Manager123!"),
+                    // Keep the strict login rate limit from interfering with unrelated tests
+                    new KeyValuePair<string, string?>("RateLimiting:Auth:PermitLimit", "100")
                 });
             });
             builder.ConfigureServices(services =>
